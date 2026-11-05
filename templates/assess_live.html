@@ -1,0 +1,45 @@
+{% extends "assess_base.html" %}
+{% block title %}Live chats{% endblock %}
+{% block body %}
+<section class="card">
+  <h1>Live chats</h1>
+  <p class="lead">Short chats with a simulated fan. You are the creator: stay in character, keep it warm, keep it on the platform, and sell when it fits. Send as many short messages as you like, then pause (or press Over to them) and the fan replies. You send every message yourself, so take your time. Pasting is off.</p>
+
+  <div class="persona" id="persona">
+    <div class="persona-who">
+      <b>You are {{ cfg.creator.name }}</b>, {{ cfg.creator.age }}, from {{ cfg.creator.location }}.
+      <span class="muted">{{ cfg.creator.vibe }}. Into {{ cfg.creator.into }}. Your page: {{ cfg.creator.niche }}.</span>
+      <span class="muted">You {{ cfg.creator.style }}. You {{ cfg.creator.boundaries }}.</span>
+    </div>
+    <details class="vault" open>
+      <summary><b>Your script</b> — send the steps in order; you decide WHEN. Tease to build it up, drop the PPV when he's ready.</summary>
+      <ol class="script-ladder" id="script-ladder">
+        {% for v in cfg.script %}<li><button type="button" class="vault-item script-step" data-id="{{ v.id }}" data-name="{{ v.label }}" data-kind="{{ v.kind }}" data-price="{{ v.price or '' }}" data-media="{{ v.media }}" data-caption="{{ v.caption }}" disabled>
+          <span class="vi-top"><b>{{ v.label }}</b> <span class="price">{% if v.price %}{{ v.price }}{% else %}free{% endif %}</span></span>
+          <span class="muted small">{{ v.media }}</span>
+          <span class="cap small">&ldquo;{{ v.caption }}&rdquo;</span>
+        </button></li>{% endfor %}
+      </ol>
+    </details>
+  </div>
+
+  <div class="chat-head"><b id="c-title">Loading</b><span class="muted small" id="c-n"></span><span class="clock" id="c-clock"></span></div>
+  <div class="wa-thread chat" id="thread"></div>
+  <div class="compose" id="compose">
+    <div class="emoji-bar" id="emojibar" aria-label="Emojis"></div>
+    <div class="compose-row">
+      <textarea id="reply" rows="2" placeholder="Type a short message, press Enter to send, keep going, then pause" autocomplete="off" spellcheck="false" disabled></textarea>
+      <div class="compose-btns">
+        <button class="btn" id="send" disabled>Send</button>
+        <button class="btn ghost small" id="over" disabled title="Finish your reply and let the fan answer">Over to them</button>
+      </div>
+    </div>
+  </div>
+  <p class="status" id="status"></p>
+  <div class="row"><button class="btn" id="next" hidden>Finish</button></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script id="cfg" type="application/json">{{ cfg|tojson }}</script>
+<script src="/static/assess.js?v=9"></script>
+{% endblock %}

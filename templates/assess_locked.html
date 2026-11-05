@@ -1,0 +1,13 @@
+{% extends "assess_base.html" %}
+{% block title %}Assessment paused{% endblock %}
+{% block body %}
+<section class="card">
+  {% if closed %}
+  <h1>This link is no longer active</h1>
+  <p class="lead">Your application is not open at the moment. If you think that is a mistake, message {{ AGENT }} and the team will look at it.</p>
+  {% else %}
+  <h1>Your assessment is paused</h1>
+  <p class="lead">The assessment can be resumed once, and that pause has been used. The team has been told; if there was a connection problem or an emergency, tell {{ AGENT }} and someone can reopen it for you.</p>
+  {% endif %}
+</section>
+{% endblock %}

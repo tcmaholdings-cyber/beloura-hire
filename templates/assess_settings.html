@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Assessment settings · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="crumbs"><a href="/staff/assess">Assessments</a> › Marks</div>
+<div class="head"><div><h1>Assessment marks</h1><p class="muted">One test, the live fan chats. Every mark below is read off that one session. Older staff typing numbers for comparison: {% for name, v in other_sources %}{{ name }} typing {{ v.typing }}{% if not loop.last %} · {% endif %}{% endfor %}.</p></div></div>
+<form method="post" action="/staff/assess/settings" class="form">
+<div class="grid2">
+<div class="stack">
+  <section class="card">
+    <h2>Pass marks</h2>
+    {% for k, label in labels.items() %}<label>{{ label }} <input type="number" step="any" name="{{ k }}" value="{{ s[k] }}"></label>{% endfor %}
+    <div class="row"><button class="btn small">Save</button></div>
+  </section>
+</div>
+<div class="stack">
+  <section class="card">
+    <h2>How the marks are used</h2>
+    <ul class="plain small">
+      <li><b>Live chats</b> is the overall grade (mean of the judged chats). At or above the pass mark passes; between the review floor and the pass mark is a review; below the floor fails.</li>
+      <li><b>Chat fluency</b> is the judge's casual-chat-English sub-score (0-5), averaged across the chats. It grades texting register, not formal English: slang and lowercase are fine; incoherent or stiff formal writing is marked down.</li>
+      <li><b>Typing</b> WPM is computed from the real typed characters in the chat replies (pasted messages are left out).</li>
+      <li><b>Download speed</b> comes from a silent probe that runs on the chat page; if it did not run, the speed check is skipped, not failed.</li>
+      <li><b>AI-use risk</b> above the mark sends the result to review for a person to check. It is never an automatic fail on its own.</li>
+      <li><b>Number of fan chats</b> and the per-message clock / idle gap control the length of the test.</li>
+    </ul>
+  </section>
+</div>
+</div>
+</form>
+{% endblock %}

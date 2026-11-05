@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Availability · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="head"><div><h1>Final-interview availability</h1><p class="muted">Weekly grid per manager, in the manager's timezone. {{ AGENT }} offers 30-minute slots from it over the next 7 days, minus booked ones.</p></div></div>
+<div class="grid2">
+<div class="stack">
+  {% for m in mgrs %}
+  <section class="card">
+    <h2>{{ m.name }} <span class="muted small">{{ m.timezone }}{% if not m.active %} · inactive{% endif %}</span></h2>
+    <form method="post" action="/staff/managers/{{ m.id }}" class="form">
+      <div class="f2">
+        <label>Name <input name="name" value="{{ m.name }}"></label>
+        <label>Discord <input name="discord" value="{{ m.discord }}"></label>
+        <label>Telegram <input name="telegram" value="{{ m.telegram }}"></label>
+        <label>Email <input name="email" value="{{ m.email }}"></label>
+        <label>Timezone <select name="timezone">{% for tz in TIMEZONES %}<option value="{{ tz }}" {% if m.timezone == tz %}selected{% endif %}>{{ tz }}</option>{% endfor %}{% if m.timezone not in TIMEZONES %}<option value="{{ m.timezone }}" selected>{{ m.timezone }}</option>{% endif %}</select></label>
+        <label class="chk"><input type="checkbox" name="active" value="1" {% if m.active %}checked{% endif %}> Takes finals</label>
+      </div>
+      <div class="row"><button class="btn small">Save</button></div>
+    </form>
+    <table class="tbl small"><thead><tr><th>Day</th><th>From</th><th>To</th><th></th></tr></thead><tbody>
+    {% for g in grid if g.manager_id == m.id %}
+      <tr><td>{{ WEEKDAYS[g.weekday] }}</td><td>{{ g.start }}</td><td>{{ g.end }}</td><td><form method="post" action="/staff/availability/{{ g.id }}/delete" class="inline"><button class="link">remove</button></form></td></tr>
+    {% else %}<tr><td colspan="4" class="muted">No hours yet. {{ AGENT }} has no slots to offer until there are.</td></tr>{% endfor %}
+    </tbody></table>
+    <form method="post" action="/staff/availability" class="row">
+      <input type="hidden" name="manager_id" value="{{ m.id }}">
+      <select name="weekday">{% for d in WEEKDAYS %}<option value="{{ loop.index0 }}">{{ d }}</option>{% endfor %}<option value="0,1,2,3,4">Mon-Fri</option><option value="0,1,2,3,4,5,6">Every day</option></select>
+      <input name="start" placeholder="10:00" required pattern="\d{1,2}:\d{2}">
+      <input name="end" placeholder="18:00" required pattern="\d{1,2}:\d{2}">
+      <button class="btn small ghost">Add hours ({{ m.timezone }})</button>
+    </form>
+  </section>
+  {% endfor %}
+  <section class="card">
+    <h2>Add a manager</h2>
+    <form method="post" action="/staff/managers" class="row">
+      <input name="name" placeholder="Name" required><input name="discord" placeholder="Discord handle">
+      <select name="timezone">{% for tz in TIMEZONES %}<option value="{{ tz }}">{{ tz }}</option>{% endfor %}</select>
+      <button class="btn small">Add</button>
+    </form>
+  </section>
+</div>
+<div class="stack">
+  <section class="card">
+    <h2>Booked finals</h2>
+    <table class="tbl small"><thead><tr><th>When (UK)</th><th>Applicant</th><th>Their time</th><th>Manager</th></tr></thead><tbody>
+    {% for i in upcoming %}<tr><td>{{ i.start_at|nice }}</td><td><a href="/staff/applicant/{{ i.applicant_id }}">{{ i.applicant_name or ('#' ~ i.applicant_id) }}</a></td><td>{{ i.start_at|nice(i.applicant_tz) }} {{ i.applicant_tz }}</td><td>{{ i.manager_name }}</td></tr>
+    {% else %}<tr><td colspan="4" class="muted">None booked.</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+  <section class="card">
+    <h2>Open slots this week (UK time)</h2>
+    <p class="small">{{ preview|length }} slots. {% for s in preview[:24] %}{{ s.uk.replace(' UK time', '') }}{% if not loop.last %} · {% endif %}{% endfor %}{% if preview|length > 24 %} ...{% endif %}</p>
+  </section>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+<a class="pcard" href="/staff/applicant/{{ r.id }}">
+  <div class="pcard-top">
+    <b>{{ r.name or r.email or ('#' ~ r.id) }}</b>
+    {% if r.channel_code %}<span class="src">{{ r.channel_code }}</span>{% endif %}
+  </div>
+  <div class="pcard-meta">
+    {% if r.score is not none %}<span class="tier">{{ r.score }}/100</span>{% endif %}
+    <span class="muted">{{ r.timezone }}</span>
+    {% if r.telegram %}<span class="muted">@{{ r.telegram }}</span>{% endif %}
+  </div>
+  <div class="pcard-foot">
+    {% if r.unanswered %}<span class="flag">reply waiting</span>{% endif %}
+    {% if r.esc_open %}<span class="flag bad">{{ r.esc_open }} escalation{{ 's' if r.esc_open != 1 }}</span>{% endif %}
+    {% if r.interview_at %}<span class="muted">final {{ r.interview_at|ago }}</span>{% endif %}
+    {% if r.nudges_sent %}<span class="muted">{{ r.nudges_sent }} nudge{{ 's' if r.nudges_sent != 1 }}</span>{% endif %}
+    <span class="muted right">{{ r.stage_changed_at|ago }}</span>
+  </div>
+</a>

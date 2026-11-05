@@ -1,0 +1,18 @@
+{% extends "assess_base.html" %}
+{% block title %}Your result{% endblock %}
+{% block body %}
+<section class="card">
+  {% set oc = a.outcome %}
+  {% if oc == 'passed' %}
+  <h1>You passed{{ ', ' ~ first if first }}</h1>
+  <p class="lead">Nice work. Next is a 30-minute final interview, a mock chat with one of our chat managers. {{ AGENT }} has messaged you with the open times.</p>
+  {% elif oc == 'failed' %}
+  <h1>Thank you{{ ', ' ~ first if first }}</h1>
+  <p class="lead">We won't be taking your application further this time{% if a.outcome_reason %}: {{ a.outcome_reason }}{% endif %}. Your chats were below the mark we need for this role. You are welcome to apply again in the future.</p>
+  {% else %}
+  <h1>Your results are in{{ ', ' ~ first if first }}</h1>
+  <p class="lead">Thanks for doing the chats. The team is looking at them and {{ AGENT }} will message you within two working days with the next step.</p>
+  {% endif %}
+  <p class="small muted">The detailed notes stay with the team. Ask {{ AGENT }} if you have a question about the process.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}{{ a.name or a.email or a.id }} · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="crumbs"><a href="/staff">Pipeline</a> › {{ a.name or a.email or ('#' ~ a.id) }}</div>
+<div class="head">
+  <div>
+    <h1>{{ a.name or a.email or ('#' ~ a.id) }}</h1>
+    <p class="muted"><span class="stage stage-{{ a.stage }}">{{ STAGE_LABELS[a.stage] }}</span> since {{ a.stage_changed_at|ago }}
+      {% if a.channel_code %} · via {{ a.channel_code }}{% endif %} · {{ a.timezone }}{% if a.score is not none %} · score {{ a.score }}/100{% endif %}
+      {% if a.do_not_contact %} · <span class="flag bad">do not contact</span>{% endif %}{% if a.awaiting_since %} · waiting on a reply since {{ a.awaiting_since|ago }}{% if a.nudges_sent %}, {{ a.nudges_sent }} nudge{{ 's' if a.nudges_sent != 1 }}{% endif %}{% endif %}</p>
+    {% if reasons %}<p class="small bad">Screened out: {{ reasons|join('; ') }}</p>{% endif %}
+  </div>
+  <div class="stage-row">
+    <form class="stage-row" method="post" action="/staff/applicant/{{ a.id }}/stage">
+      <input type="hidden" name="reason" value="forced by staff">
+      {% for s in STAGES %}<button name="stage" value="{{ s }}" class="stg {% if a.stage == s %}on{% endif %}" title="Force stage {{ STAGE_LABELS[s] }}">{{ STAGE_LABELS[s] }}</button>{% endfor %}
+    </form>
+  </div>
+</div>
+
+<div class="grid2">
+<div class="stack">
+  <section class="card">
+    <h2>Contact</h2>
+    <form method="post" action="/staff/applicant/{{ a.id }}/edit" class="form">
+      <div class="f2">
+        <label>Name <input name="name" value="{{ a.name }}"></label>
+        <label>Email <input name="email" value="{{ a.email or '' }}"></label>
+        <label>Telegram <input name="telegram" value="{{ a.telegram or '' }}">{% if a.telegram_chat_id %}<span class="hint">linked, chat {{ a.telegram_chat_id }}</span>{% elif tg_link %}<span class="hint">not linked yet: <a href="{{ tg_link }}">start link</a></span>{% endif %}</label>
+        <label>Discord <input name="discord" value="{{ a.discord or '' }}">{% if a.discord_user_id %}<span class="hint">linked, user {{ a.discord_user_id }}{% if a.discord_channel_id %}, private channel {{ a.discord_channel_id }}{% endif %}</span>{% elif discord_invite %}<span class="hint">not joined yet: <a href="{{ discord_invite }}">invite</a></span>{% endif %}</label>
+        <label>Phone <input name="phone" value="{{ a.phone or '' }}"></label>
+        <label>Timezone <select name="timezone">{% for tz in TIMEZONES %}<option value="{{ tz }}" {% if a.timezone == tz %}selected{% endif %}>{{ tz }}</option>{% endfor %}{% if a.timezone not in TIMEZONES %}<option value="{{ a.timezone }}" selected>{{ a.timezone }}</option>{% endif %}</select></label>
+      </div>
+      <label>Notes <textarea name="notes" rows="2">{{ a.notes }}</textarea></label>
+      <label class="chk"><input type="checkbox" name="do_not_contact" value="1" {% if a.do_not_contact %}checked{% endif %}> Do not contact</label>
+      <div class="row"><button class="btn">Save</button></div>
+    </form>
+    <p class="row"><a class="btn ghost small" href="/staff/assess/{{ a.id }}">Assessment scorecard</a></p>
+    {% if a.stage in ('applied', 'screened_in', 'assessment_sent', 'assessment_in_progress', 'assessment_done') %}<form method="post" action="/staff/applicant/{{ a.id }}/fasttrack" class="row"><button class="btn ghost small">Fast-track to final</button><span class="muted small">Skips the assessment; {{ AGENT }} sends the interview slots.</span></form>{% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Application</h2>
+    {% if app %}
+    <div class="kv">
+      <div><span class="muted">18 or over</span> {{ 'yes' if app.age_18 else 'no' }}</div>
+      <div><span class="muted">Device</span> {{ app.device }} · {{ app.connection_type }}</div>
+      <div><span class="muted">Willing to train</span> {{ 'yes' if app.willing_to_train else 'no' }}</div>
+      <div><span class="muted">Shifts (UK)</span> {% for s in app.available_shifts %}{{ SHIFT_LABELS.get(s, s) }}{% if not loop.last %}, {% endif %}{% else %}none{% endfor %}</div>
+      <div><span class="muted">Hours per week</span> {{ app.hours_per_week }}</div>
+      <div><span class="muted">English (self)</span> {{ app.english_self_rating }}/5</div>
+      <div><span class="muted">Experience</span> {{ app.experience }}</div>
+      <div><span class="muted">Heard from</span> {{ app.heard_from }} · form {{ app.channel_code or 'direct' }}</div>
+      <div><span class="muted">Consent</span> {{ 'yes' if app.consent else 'no' }} · {{ app.created_at|nice }} UK</div>
+    </div>
+    {% if app.experience_text %}<p><b>Experience</b><br>{{ app.experience_text }}</p>{% endif %}
+    <p><b>Why this role</b><br>{{ app.why }}</p>
+    {% if apps|length > 1 %}<p class="hint">{{ apps|length }} applications on file; the newest is shown.</p>{% endif %}
+    {% else %}<p class="muted">No application on file.</p>{% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Text interview (five questions)</h2>
+    {% if iv_state == 'done' %}<p class="small">{{ 'Passed' if grade.passed else 'Failed' }} · score {{ grade.score }}/10 · GFE {{ 'ok' if grade.gfe_ok else 'not shown' }}{% if grade.red_flags %} · flags: {{ grade.red_flags|join(', ') }}{% endif %}{% if grade.grader %} · graded by {{ grade.grader }}{% endif %}{% if grade.override_by %} · overridden by {{ grade.override_by }}{% endif %}</p>
+    {% if grade.summary %}<p class="small muted">{{ grade.summary }}</p>{% endif %}
+    {% elif iv_state.startswith('q') %}<p class="small">In progress: question {{ iv_state[1:]|int + 1 }} of 5 on {{ app.interview_channel or 'the linked channel' }}.</p>
+    {% else %}<p class="small muted">Not started. It starts by itself when a channel links (Telegram Start or Discord join).</p>{% endif %}
+    {% for q, ans in qa %}{% if ans %}<p class="small"><b>{{ q }}</b><br>{{ ans }}</p>{% endif %}{% endfor %}
+    <form method="post" action="/staff/applicant/{{ a.id }}/interview-override" class="row">
+      <button class="btn small" name="action" value="pass">Mark passed</button>
+      <button class="btn small ghost" name="action" value="fail">Mark failed</button>
+      {% if not iv_state %}<button class="btn small ghost" name="action" value="start">Start now</button>{% else %}<button class="link" name="action" value="restart">restart</button>{% endif %}
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Final interview</h2>
+    {% if iv %}
+      <p><b>{{ iv.start_at|both(a.timezone) }}</b> with {{ iv.manager_name }} · {{ iv.status }}{% if iv.reminded_24h_at %} · 24 h reminder sent{% endif %}{% if iv.reminded_1h_at %} · 1 h reminder sent{% endif %}{% if iv.discord_thread_id %} · finals thread {{ iv.discord_thread_id }}{% endif %}</p>
+      <form method="post" action="/staff/applicant/{{ a.id }}/interview" class="row">
+        <button class="btn small" name="action" value="done">Held</button>
+        <button class="btn small ghost" name="action" value="no_show">No-show</button>
+        <button class="btn small ghost" name="action" value="cancel">Cancel</button>
+      </form>
+    {% else %}<p class="muted">Nothing booked.</p>{% endif %}
+    {% if open_slots %}
+    <form method="post" action="/staff/applicant/{{ a.id }}/interview" class="row">
+      <select name="start">{% for s in open_slots %}<option value="{{ s.start }}">{{ s.local }} · {{ s.uk }}</option>{% endfor %}</select>
+      <button class="btn small ghost" name="action" value="book">{{ 'Move to' if iv else 'Book' }}</button>
+    </form>
+    {% else %}<p class="hint">No open slots on the grid for the next week. <a href="/staff/availability">Edit availability</a>.</p>{% endif %}
+    {% if past %}<table class="tbl small"><thead><tr><th>When (UK)</th><th>Manager</th><th>Status</th></tr></thead><tbody>
+      {% for p in past %}<tr><td>{{ p.start_at|nice }}</td><td>{{ p.manager_name }}</td><td>{{ p.status }}{% if p.verdict %} · verdict {{ p.verdict.replace('_', ' ') }} ({{ p.verdict_by }}){% endif %}</td></tr>{% endfor %}</tbody></table>{% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Escalations</h2>
+    {% for e in escs %}
+    <div class="run {{ e.status }}">
+      <b>{{ e.reason }}</b> · {{ e.status }} · {{ e.created_at|ago }}
+      {% if e.question %}<div class="small">Q: {{ e.question }}</div>{% endif %}
+      {% if e.answer %}<div class="small">A: {{ e.answer }} <span class="muted">({{ e.answered_by }})</span></div>{% endif %}
+      {% if e.status == 'open' %}
+      <form method="post" action="/staff/escalations/{{ e.id }}/answer" class="form">
+        <input type="hidden" name="next" value="/staff/applicant/{{ a.id }}">
+        <textarea name="answer" rows="2" required placeholder="The answer. {{ AGENT }} sends it to the applicant as 'I checked on this.'"></textarea>
+        <div class="row"><label class="chk"><input type="checkbox" name="save_knowledge" value="1" checked> Also save to the knowledge base</label>
+          <button class="btn small">Answer</button></div>
+      </form>
+      <form method="post" action="/staff/escalations/{{ e.id }}/close" class="inline"><input type="hidden" name="next" value="/staff/applicant/{{ a.id }}"><button class="link">close without answering</button></form>
+      {% endif %}
+    </div>
+    {% else %}<p class="muted">None.</p>{% endfor %}
+  </section>
+</div>
+
+<div class="stack">
+  <section class="card">
+    <h2>Messages</h2>
+    <form method="post" action="/staff/applicant/{{ a.id }}/send" class="form">
+      <textarea name="text" rows="2" required placeholder="Send a message to the applicant in {{ AGENT }}'s thread"></textarea>
+      <div class="row">
+        <select name="channel"><option value="">best channel</option><option value="telegram">Telegram</option><option value="discord">Discord</option><option value="email">Email</option></select>
+        <button class="btn small" {% if a.do_not_contact %}disabled{% endif %}>Send</button>
+      </div>
+    </form>
+    <div class="wa-thread">
+    {% for m in msgs %}
+      <div class="wa-msg {{ 'wa-in' if m.direction == 'in' else 'wa-out' }} {% if m.status in ('failed', 'held') %}wa-failed{% endif %}">
+        <div class="wa-meta">{{ m.created_at|ago }} · {{ m.channel or 'no channel' }} · {{ m.kind }}{% if m.actor and m.actor not in ('sam', 'applicant') %} · {{ m.actor }}{% endif %}{% if m.status not in ('sent', 'received') %} · <span class="bad">{{ m.status }}{% if m.error %}: {{ m.error }}{% endif %}</span>{% endif %}</div>
+        <div class="wa-text">{{ m.body }}</div>
+      </div>
+    {% else %}<p class="muted">No messages yet.</p>{% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Stage history</h2>
+    <ul class="timeline">
+    {% for h in hist|reverse %}
+      <li class="ev"><span class="when" title="{{ h.at }}">{{ h.at|ago }}</span>
+        <span class="what"><b>{{ STAGE_LABELS.get(h.from_stage, h.from_stage) or 'new' }} → {{ STAGE_LABELS.get(h.to_stage, h.to_stage) }}</b> · {{ h.actor }}<div>{{ h.reason }}</div></span></li>
+    {% endfor %}
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>{{ AGENT }}'s cost</h2>
+    <p class="small">{{ cost.n }} model calls · {{ cost.ti }} tokens in · {{ cost.tout }} out · ${{ '%.4f'|format(cost.usd) }}</p>
+  </section>
+</div>
+</div>
+{% endblock %}

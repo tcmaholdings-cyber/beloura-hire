@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Escalations · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="head"><div><h1>Escalations</h1><p class="muted">Questions {{ AGENT }} could not answer and situations handed to a person. Answering sends the reply to the applicant and, if ticked, saves it to the knowledge base.</p></div></div>
+<section class="card">
+{% for e in rows %}
+  <div class="run {{ e.status }}">
+    <b><a href="/staff/applicant/{{ e.applicant_id }}">{{ e.name or ('#' ~ e.applicant_id) }}</a></b> · <span class="stage stage-{{ e.stage }}">{{ STAGE_LABELS.get(e.stage, e.stage) }}</span> · {{ e.reason }} · {{ e.status }} · {{ e.created_at|ago }}
+    {% if e.question %}<div class="small">Q: {{ e.question }}</div>{% endif %}
+    {% if e.answer %}<div class="small">A: {{ e.answer }} <span class="muted">({{ e.answered_by }}, {{ e.answered_at|ago }})</span></div>{% endif %}
+    {% if e.status == 'open' %}
+    <form method="post" action="/staff/escalations/{{ e.id }}/answer" class="form">
+      <textarea name="answer" rows="2" required placeholder="The answer for the applicant"></textarea>
+      <div class="row"><label class="chk"><input type="checkbox" name="save_knowledge" value="1" checked> Also save to the knowledge base</label>
+        <button class="btn small">Answer and send</button></div>
+    </form>
+    <form method="post" action="/staff/escalations/{{ e.id }}/close" class="inline"><button class="link">close without answering</button></form>
+    {% endif %}
+  </div>
+{% else %}<p class="muted">Nothing open.</p>{% endfor %}
+</section>
+{% endblock %}

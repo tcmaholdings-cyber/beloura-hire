@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/static/app.css?v=1">
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+<header class="top">
+  <a class="brand" href="/staff"><span class="mark"></span><b>Beloura</b> <em>Hire</em></a>
+  <nav class="tabs">
+    {% for href, label in [('/staff', 'Pipeline'), ('/staff/escalations', 'Escalations'), ('/staff/knowledge', 'Knowledge'), ('/staff/availability', 'Availability'), ('/staff/olj', 'OLJ'), ('/staff/settings', 'Settings')] %}
+    <a href="{{ href }}" class="{% if (href == '/staff' and path == '/staff') or (href != '/staff' and path.startswith(href)) %}on{% endif %}">{{ label }}{% if href == '/staff/escalations' and esc_n %} <span class="count">{{ esc_n }}</span>{% endif %}</a>
+    {% endfor %}
+  </nav>
+  <div class="right">
+    {% if user %}<span class="who" data-initial="{{ user.name[:1] }}" title="{{ user.via }}">{{ user.name }}</span>{% endif %}
+    <button class="theme" id="theme" title="Theme">Theme</button>
+    <a class="out" href="/logout" title="Sign out">Sign out</a>
+  </div>
+</header>
+<main>
+{% block body %}{% endblock %}
+</main>
+<footer class="foot">
+  {% if worker %}Worker ran {{ worker.started_at|ago }}{% if not worker.ok %} · <span class="bad">last run failed</span>{% endif %}{% else %}Worker has not run yet{% endif %}
+  · {{ AGENT }}, Beloura's recruiting assistant · people review every decision
+</footer>
+<script>
+(function(){var t=null;try{t=localStorage.getItem('hire-theme')}catch(e){}if(t)document.documentElement.setAttribute('data-theme',t);
+document.getElementById('theme').addEventListener('click',function(){var cur=document.documentElement.getAttribute('data-theme');
+var next=cur==='dark'?'light':(cur==='light'?'dark':(window.matchMedia('(prefers-color-scheme: dark)').matches?'light':'dark'));
+document.documentElement.setAttribute('data-theme',next);try{localStorage.setItem('hire-theme',next)}catch(e){}});
+document.querySelectorAll('form[data-confirm]').forEach(function(f){f.addEventListener('submit',function(e){if(!window.confirm(f.getAttribute('data-confirm')))e.preventDefault();});});
+})();
+</script>
+</body>
+</html>

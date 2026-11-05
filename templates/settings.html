@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Settings · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="head"><div><h1>Settings</h1></div></div>
+<div class="grid2">
+<div class="stack">
+  <section class="card">
+    <h2>Vacancies per shift block</h2>
+    <form method="post" action="/staff/settings" class="form">
+      <div class="f2">
+        {% for k, label in SHIFT_LABELS.items() %}<label>{{ label }} <input type="number" min="0" name="vacancies_{{ k }}" value="{{ s['vacancies_' ~ k] }}"></label>{% endfor %}
+      </div>
+      <p class="hint">A block with 0 vacancies does not count as a match; applicants whose only shifts are closed are screened out.</p>
+      <h2>Nudges and ghosting</h2>
+      <div class="f2">
+        <label>Nudges before ghosting <input type="number" min="1" name="ghost_nudges" value="{{ s.ghost_nudges }}"></label>
+        <label>Spread over days <input type="number" min="1" name="ghost_days" value="{{ s.ghost_days }}"></label>
+        <label>Stages that get nudged (comma list) <input name="nudge_stages" value="{{ s.nudge_stages }}"></label>
+      </div>
+      <h2>Slots</h2>
+      <div class="f2">
+        <label>Slot length (minutes) <input type="number" min="15" name="slot_minutes" value="{{ s.slot_minutes }}"></label>
+        <label>Days ahead <input type="number" min="1" name="slot_days" value="{{ s.slot_days }}"></label>
+        <label>Minimum notice (hours) <input type="number" min="0" name="slot_lead_hours" value="{{ s.slot_lead_hours }}"></label>
+      </div>
+      <label class="chk"><input type="checkbox" name="interview_enabled" value="1" {% if s.interview_enabled == '1' %}checked{% endif %}> Run the five-question text interview after screening</label>
+      <label class="chk"><input type="checkbox" name="book_from_screened_in" value="1" {% if s.book_from_screened_in == '1' %}checked{% endif %}> Let {{ AGENT }} book finals straight after screening or the text interview (until the assessment portal exists)</label>
+      <h2>Score thresholds</h2>
+      <div class="f2">
+        <label>Fast-track suggestion at or above <input type="number" min="0" max="100" name="score_fast_track" value="{{ s.score_fast_track }}"></label>
+        <label>Low score below <input type="number" min="0" max="100" name="score_low" value="{{ s.score_low }}"></label>
+      </div>
+      <h2>Discord</h2>
+      <label>Permanent invite for applicants <input name="discord_invite_url" value="{{ s.discord_invite_url }}" placeholder="created by tools/discord_setup.py"></label>
+      <div class="row"><button class="btn small">Save</button></div>
+    </form>
+  </section>
+  <section class="card">
+    <h2>Discord layout</h2>
+    <p class="hint">Created by <code>.venv/bin/python -m tools.discord_setup</code>; ids live in settings, not in .env.</p>
+    <table class="tbl small"><tbody>
+    {% for k, v in discord_ids %}<tr><td>{{ k.replace('discord_', '').replace('_', ' ') }}</td><td class="mono">{{ v or 'not created' }}</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+</div>
+<div class="stack">
+  <section class="card">
+    <h2>Channels</h2>
+    <ul class="plain">
+      {% for k, label in [('sam', AGENT ~ ' (OpenRouter)'), ('telegram', 'Telegram bot'), ('discord', 'Discord bot'), ('email', 'Email (SMTP)'), ('imap', 'Email replies (IMAP)'), ('gateway', 'Gateway sign-in')] %}
+      <li><span class="dot {{ 'ok' if health[k] else 'off' }}"></span> {{ label }}: {{ 'configured' if health[k] else 'not configured, running dry' }}</li>
+      {% endfor %}
+    </ul>
+    <p class="hint">Values live in the .env next to the app. Models: {{ models|join(', ') }} · prompt {{ prompt_version }}.</p>
+  </section>
+  <section class="card">
+    <h2>{{ AGENT }}'s cost, last 30 days</h2>
+    <p>{{ llm.n }} calls · ${{ '%.4f'|format(llm.usd) }}</p>
+  </section>
+  <section class="card">
+    <h2>Messages not delivered</h2>
+    {% if failed %}<table class="tbl small"><thead><tr><th>Applicant</th><th>Channel</th><th>Status</th><th>Why</th></tr></thead><tbody>
+    {% for m in failed %}<tr><td><a href="/staff/applicant/{{ m.applicant_id }}">{{ m.name or ('#' ~ m.applicant_id) }}</a></td><td>{{ m.channel or '-' }}</td><td>{{ m.status }}</td><td class="muted small">{{ m.error[:120] }}</td></tr>{% endfor %}
+    </tbody></table>{% else %}<p class="muted">None.</p>{% endif %}
+    <p class="hint">Held messages go out by themselves once the applicant links a channel (for Telegram, when they tap Start).</p>
+  </section>
+  <section class="card">
+    <h2>Worker</h2>
+    <table class="tbl small"><thead><tr><th>Kind</th><th>Started</th><th>OK</th><th>Notes</th></tr></thead><tbody>
+    {% for r in runs %}<tr><td>{{ r.kind }}</td><td>{{ r.started_at|ago }}</td><td class="{% if not r.ok %}bad{% endif %}">{{ 'yes' if r.ok else 'no' }}</td><td class="muted small">{{ r.notes[:100] }}</td></tr>{% else %}<tr><td colspan="4" class="muted">Not run yet</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+</div>
+</div>
+{% endblock %}

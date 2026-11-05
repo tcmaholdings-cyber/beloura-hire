@@ -1,0 +1,22 @@
+{% extends "assess_base.html" %}
+{% block title %}Grade chats{% endblock %}
+{% block body %}
+<section class="card">
+  <h1>Grading as {{ label }}</h1>
+  <p class="lead">Score each saved test chat 1 to 5 on how a top chatter would rate it. Everyone on the team grades the same chats; you will not see your own. Your scores train the AI grader, so be honest.</p>
+  <p class="small muted">Open each chat, read it, and give a quick score. You can come back and change a score any time. <a href="/grade/{{ grader }}/{{ tok }}/compare">See how the team compares to the AI</a>.</p>
+  {% if not chats %}<p class="muted">No finished chats to grade yet. Check back once the testers have run them.</p>{% endif %}
+  {% set ns = namespace(cur=0) %}
+  <table class="tbl"><thead><tr><th>Applicant</th><th>Chat</th><th>Your score</th><th>Graded by</th><th></th></tr></thead><tbody>
+  {% for c in chats %}
+    <tr>
+      <td>{{ c.name or ('#' ~ c.aid) }}</td>
+      <td>{{ c.title }}</td>
+      <td>{% if c.mine is not none %}<b>{{ c.mine }}/5</b>{% else %}<span class="muted">not yet</span>{% endif %}</td>
+      <td class="muted small">{{ c.graders_done }} of {{ total_graders }}</td>
+      <td><a class="btn small {% if c.mine is none %}{% else %}ghost{% endif %}" href="/grade/{{ grader }}/{{ tok }}/{{ c.aid }}/{{ c.key }}">{% if c.mine is none %}Grade{% else %}Edit{% endif %}</a></td>
+    </tr>
+  {% endfor %}
+  </tbody></table>
+</section>
+{% endblock %}

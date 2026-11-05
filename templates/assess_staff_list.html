@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Assessments · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="head">
+  <div><h1>Assessments</h1><p class="muted">{{ rows|length }} on file · one test, the live chats · marks: live {{ th.scenario_live }}/10 (review from {{ th.live_review_floor }}), chat fluency {{ th.chat_fluency }}/5, typing {{ th.typing_wpm|int }} WPM, {{ th.speed_down_mbps|int }} Mbps, AI-risk review over {{ th.ai_risk_review|int }}</p></div>
+  <div><a class="btn small ghost" href="/staff/grade">Grade calibration</a>{% if user and user.role == 'admin' %} <a class="btn small ghost" href="/staff/assess/settings">Marks</a>{% endif %}</div>
+</div>
+<section class="card">
+  <table class="tbl"><thead><tr><th>Applicant</th><th>Stage</th><th>Status</th><th>Outcome</th><th>Live</th><th>Fluency</th><th>WPM</th><th>AI risk</th><th>Conn</th><th>Cost</th><th>Updated</th></tr></thead><tbody>
+  {% for r in rows %}{% set sc = r.scores %}
+  <tr>
+    <td><a href="/staff/assess/{{ r.applicant_id }}">{{ r.name or ('#' ~ r.applicant_id) }}</a></td>
+    <td><span class="stage stage-{{ r.stage }}">{{ STAGE_LABELS.get(r.stage, r.stage) }}</span></td>
+    <td>{{ r.status }}{% if r.resumes %} <span class="muted small">resumed</span>{% endif %}</td>
+    <td>{% if r.outcome %}<b class="oc-{{ r.outcome }}">{{ r.outcome }}</b>{% endif %}</td>
+    <td>{% if sc.get('live') is not none %}{{ sc.get('live') }}{% endif %}</td>
+    <td>{% if sc.get('chat_fluency') is not none %}{{ sc.get('chat_fluency') }}{% endif %}</td>
+    <td>{% if sc.get('typing_wpm') is not none %}{{ sc.get('typing_wpm') }}{% endif %}</td>
+    <td>{% if sc.get('ai_risk') is not none %}{% if sc.get('ai_risk') > th.ai_risk_review %}<span class="pill no">{{ sc.get('ai_risk') }}</span>{% else %}{{ sc.get('ai_risk') }}{% endif %}{% endif %}</td>
+    <td class="muted">{% if sc.get('connection_down') is not none %}{{ sc.get('connection_down') }}{% else %}-{% endif %}</td>
+    <td>${{ '%.3f'|format(r.usd) }}</td>
+    <td class="muted">{{ r.updated_at|ago }}</td>
+  </tr>
+  {% else %}<tr><td colspan="11" class="muted">No assessments yet. Send a link from an applicant's assessment page: /staff/assess/&lt;id&gt;.</td></tr>{% endfor %}
+  </tbody></table>
+</section>
+{% endblock %}

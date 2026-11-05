@@ -1,0 +1,42 @@
+# beloura-hire: isolated stack. The app port is not published on the host; only the cloudflared sidecar
+# reaches it over the private compose network at http://app:8140. All config comes from ./.env.
+
+name: beloura-hire
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: beloura-hire-app:latest
+    env_file:
+      - ./.env
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8140"
+      HIRE_DB_PATH: /app/data/hire.db
+    expose:
+      - "8140"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    init: true
+    restart: unless-stopped
+    mem_limit: 512m
+    networks:
+      - hire-net
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - hire-net
+
+networks:
+  hire-net:
+    driver: bridge

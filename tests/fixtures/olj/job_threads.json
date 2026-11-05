@@ -1,0 +1,19 @@
+{
+ "data": [
+  {
+   "thread": {"id": 601, "hash_id": "th_j1k2l3", "job_id": 4433222, "job_hash_id": "job_open1", "is_archived": 0},
+   "partner": {"id": 4433225, "hash_id": "ps_44", "name": "Ana Cruz", "email": "ana.cruz@example.com"},
+   "message": {"message_id": 91001, "body": "Hello, I would like to apply for the night shift chat support role.", "created": "2026-11-04 01:10:00", "sender_id": 4433225},
+   "owner": {"id": 1200, "hash_id": "em_12", "name": "Employer", "email": "employer@example.com"},
+   "unread_status": false
+  },
+  {
+   "thread": {"id": 602, "hash_id": "th_m4n5o6", "job_id": 4433222, "job_hash_id": "job_open1", "is_archived": 0},
+   "partner": {"id": 7788990, "hash_id": "ps_77", "name": "Maria Santos", "email": "maria.santos@example.com"},
+   "message": {"message_id": 91002, "body": "Hi again, I also applied for this one. Night shift works for me.", "created": "2026-11-04 01:20:00", "sender_id": 7788990},
+   "owner": {"id": 1200, "hash_id": "em_12", "name": "Employer", "email": "employer@example.com"},
+   "unread_status": true
+  }
+ ],
+ "meta": {"current_page": 1, "last_page": 1, "per_page": 50, "total": 2}
+}

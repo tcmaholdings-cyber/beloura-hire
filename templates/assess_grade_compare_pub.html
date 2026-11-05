@@ -1,0 +1,23 @@
+{% extends "assess_base.html" %}
+{% block title %}Team vs AI{% endblock %}
+{% block body %}
+<section class="card">
+  <div class="row" style="justify-content:space-between">
+    <h1 style="margin:0">Team vs AI</h1>
+    <a class="btn small ghost" href="/grade/{{ grader }}/{{ tok }}">Back to grading</a>
+  </div>
+  <p class="muted small">Weighted team score (Connor x4, Mae x3, Jam x2, Gabby x1), out of 10, next to the AI grader and the gap.</p>
+  <table class="tbl"><thead><tr><th>Applicant</th><th>Chat</th>{% for k, label, w in graders %}<th>{{ label }}</th>{% endfor %}<th>Team /10</th><th>AI /10</th><th>Gap</th></tr></thead><tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.name or ('#' ~ r.aid) }}</td>
+      <td>{{ r.title }}</td>
+      {% for k, label, w in graders %}{% set g = (r.grades | selectattr('grader','equalto',k) | list) %}<td>{% if g %}{{ g[0].overall }}{% else %}<span class="muted">-</span>{% endif %}</td>{% endfor %}
+      <td>{% if r.human10 is not none %}<b>{{ r.human10 }}</b>{% else %}<span class="muted">-</span>{% endif %}</td>
+      <td>{% if r.ai10 is not none %}{{ r.ai10 }}{% else %}<span class="muted">-</span>{% endif %}</td>
+      <td>{% if r.gap is not none %}{{ r.gap }}{% else %}<span class="muted">-</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody></table>
+</section>
+{% endblock %}

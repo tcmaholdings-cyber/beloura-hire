@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Knowledge · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="head"><div><h1>Knowledge base</h1><p class="muted">The only facts {{ AGENT }} may state. Keep answers short and in {{ AGENT }}'s voice. Inactive items are kept but not used.</p></div></div>
+<div class="grid2">
+<div class="stack">
+  {% for k in items %}
+  <section class="card {% if not k.active %}muted{% endif %}">
+    <form method="post" action="/staff/knowledge/{{ k.id }}" class="form">
+      <label>Question {% if k.key %}<span class="muted">key {{ k.key }}</span>{% endif %} <input name="question" value="{{ k.question }}"></label>
+      <label>Answer <textarea name="answer" rows="3">{{ k.answer }}</textarea></label>
+      <div class="row">
+        <button class="btn small" name="action" value="save">Save</button>
+        <button class="btn small ghost" name="action" value="toggle">{{ 'Deactivate' if k.active else 'Activate' }}</button>
+        <button class="link bad" name="action" value="delete" onclick="return confirm('Delete this item?')">delete</button>
+        <span class="muted small">{{ k.updated_by }} · {{ k.updated_at|ago }}</span>
+      </div>
+    </form>
+  </section>
+  {% endfor %}
+</div>
+<div class="stack">
+  <section class="card">
+    <h2>Add an item</h2>
+    <form method="post" action="/staff/knowledge" class="form">
+      <label>Question <input name="question" required placeholder="What applicants ask"></label>
+      <label>Answer <textarea name="answer" rows="3" required placeholder="What {{ AGENT }} says"></textarea></label>
+      <label>Key (optional, letters and underscores) <input name="key" placeholder="e.g. holidays"></label>
+      <div class="row"><button class="btn small">Add</button></div>
+    </form>
+  </section>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Application received · Beloura</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/static/app.css?v=1">
+<style>main.narrow{max-width:640px;margin:0 auto;padding:24px 16px}</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+<main class="narrow">
+<section class="card">
+  {% if screened_out %}
+  <h1>Thanks, {{ a.name.split(' ')[0] if a.name else 'and thank you' }}</h1>
+  <p>Your application is in. We've sent you a note about it{% if a.email %} at {{ a.email }}{% endif %}.</p>
+  {% else %}
+  <h1>Thanks, {{ a.name.split(' ')[0] if a.name else 'and thank you' }}. You're in.</h1>
+  <p>{{ AGENT }}, Beloura's recruiting assistant, is your contact from here. {{ AGENT }} is automated; people on the team review every decision.</p>
+  {% if sent_on %}<p>{{ AGENT }} has just messaged you on {{ sent_on }} with what happens next.</p>{% endif %}
+  {% if tg_link or discord_invite %}
+  <p><b>Next:</b> pick where you'd like to talk. {{ AGENT }} starts a short five-question interview there.</p>
+  <p>{% if tg_link %}<a class="btn" href="{{ tg_link }}">Open {{ AGENT }} on Telegram</a> {% endif %}{% if discord_invite %}<a class="btn ghost" href="{{ discord_invite }}">Join our Discord</a>{% endif %}</p>
+  {% if discord_invite %}<p class="muted small">On Discord, use the same username you put on the form; {{ AGENT }} opens a private channel for you when you join.</p>{% endif %}
+  {% endif %}
+  <p class="muted small">You can ask {{ AGENT }} anything about the role, the pay, the shifts or the process, and ask for a person at any time.</p>
+  {% endif %}
+</section>
+</main>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Grade calibration · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="head"><div><h1>Grade calibration</h1><p class="muted">Team scores vs the AI judge. Human is a weighted mean (Connor x4, Mae x3, Jam x2, Gabby x1), shown out of 10 to compare with the judge.</p></div></div>
+<section class="card">
+  <h2>Grader links</h2>
+  <p class="small muted">Send each person their own link. No one can grade their own run.</p>
+  <ul class="plain small">{% for label, url in links %}<li><b>{{ label }}</b>: <code>{{ url }}</code></li>{% endfor %}</ul>
+</section>
+<section class="card">
+  <table class="tbl"><thead><tr><th>Applicant</th><th>Chat</th>{% for k, label, w in graders %}<th>{{ label }}</th>{% endfor %}<th>Human /10</th><th>AI /10</th><th>Gap</th></tr></thead><tbody>
+  {% for r in rows %}
+    <tr>
+      <td><a href="/staff/assess/{{ r.aid }}">{{ r.name or ('#' ~ r.aid) }}</a></td>
+      <td>{{ r.title }}</td>
+      {% for k, label, w in graders %}{% set g = (r.grades | selectattr('grader','equalto',k) | list) %}<td>{% if g %}{{ g[0].overall }}{% else %}<span class="muted">-</span>{% endif %}</td>{% endfor %}
+      <td>{% if r.human10 is not none %}<b>{{ r.human10 }}</b>{% else %}<span class="muted">-</span>{% endif %}</td>
+      <td>{% if r.ai10 is not none %}{{ r.ai10 }}{% else %}<span class="muted">-</span>{% endif %}</td>
+      <td>{% if r.gap is not none %}<b class="{{ 'oc-failed' if r.gap|abs >= 2 else '' }}">{{ r.gap }}</b>{% else %}<span class="muted">-</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody></table>
+</section>
+{% endblock %}

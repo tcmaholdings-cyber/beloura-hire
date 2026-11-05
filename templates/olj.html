@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}OnlineJobs.ph · {{ APP_NAME }}{% endblock %}
+{% block body %}
+{% set messages = {'toggled': 'Sync setting saved.', 'sync-started': 'Sync started in the background; refresh in a minute.', 'no-session': 'No OLJ session on file. The owner runs tools/olj_cli.py login on the laptop first.', 'invite-held': 'Invite written as held (OLJ_SEND=0): nothing was sent to OnlineJobs.ph.', 'invite-sent': 'Invite posted to the OnlineJobs.ph thread.'} %}
+<div class="head"><div><h1>OnlineJobs.ph</h1><p class="muted">Inbound applicants from the OLJ inbox and the notification emails. {{ AGENT }} reads; nothing goes out unless OLJ_SEND=1.</p></div></div>
+{% if msg and messages.get(msg) %}<p class="hint">{{ messages[msg] }}</p>{% endif %}
+<div class="grid2">
+<div class="stack">
+  <section class="card">
+    <h2>Session</h2>
+    <ul class="plain">
+      <li><span class="dot {{ 'ok' if status.present else 'off' }}"></span> Session file: {{ 'present' if status.present else 'missing' }} <span class="muted small mono">{{ status.path }}</span></li>
+      <li><span class="dot {{ 'ok' if status.token_present else 'off' }}"></span> Access token: {{ 'present' if status.token_present else 'none' }}</li>
+      <li>Fetched: {% if status.fetched_at %}{{ status.fetched_at }} ({{ status.fetched_at|ago }}){% else %}never{% endif %}</li>
+      <li>Cookies: {{ status.cookies }} · account {{ status.user.email or status.login_email or 'unknown' }}</li>
+      <li><span class="dot {{ 'ok' if send_enabled else 'off' }}"></span> Sending: {% if send_enabled %}on (OLJ_SEND=1){% else %}off, read-only (OLJ_SEND=0): replies are held{% endif %}</li>
+    </ul>
+    <p class="hint">The owner logs in once on the laptop: <code>.venv/bin/python tools/olj_cli.py login</code> (a local keychain item). The login form carries a captcha; the fallback is <code>login --cookies cookies.txt</code> exported from the browser. Nothing here has run against the live site yet.</p>
+  </section>
+  <section class="card">
+    <h2>Sync</h2>
+    <ul class="plain">
+      <li><span class="dot {{ 'ok' if s.olj_sync_enabled == '1' else 'off' }}"></span> Automatic sync: {{ 'on' if s.olj_sync_enabled == '1' else 'off' }}, every {{ sync_seconds }} s ({{ due_why }})</li>
+      <li>Last sync: {{ s.olj_last_sync_at|ago }}{% if s.olj_last_sync_at %} · {{ s.olj_last_sync_at }}{% endif %}</li>
+      <li>Last attempt: {{ s.olj_last_attempt_at|ago }}</li>
+      {% if s.olj_last_sync_error %}<li class="bad">Last error: {{ s.olj_last_sync_error }}</li>{% endif %}
+      {% if s.olj_last_sync_notes %}<li class="muted small mono">{{ s.olj_last_sync_notes }}</li>{% endif %}
+      <li>Mark threads read on OLJ after import: {{ 'yes' if s.olj_mark_read == '1' and send_enabled else 'no (needs OLJ_SEND=1 and olj_mark_read=1)' }}</li>
+    </ul>
+    {% if is_admin %}
+    <div class="row">
+      <form method="post" action="/staff/olj/toggle"><button class="btn small">{{ 'Turn automatic sync off' if s.olj_sync_enabled == '1' else 'Turn automatic sync on' }}</button></form>
+      <form method="post" action="/staff/olj/sync" data-confirm="Pull the OnlineJobs.ph inbox now?"><button class="btn small" {% if not status.present %}disabled{% endif %}>Sync now</button></form>
+    </div>
+    {% endif %}
+  </section>
+  <section class="card">
+    <h2>Counts</h2>
+    <table class="tbl small"><tbody>
+      <tr><td>Imported threads</td><td>{{ counts.threads }} ({{ counts.threads_email }} from notification emails)</td></tr>
+      <tr><td>Applicants via OLJ</td><td>{{ counts.applicants }}</td></tr>
+      <tr><td>Inbound messages</td><td>{{ counts.inbound }}</td></tr>
+      <tr><td>Replies held</td><td>{{ counts.held }}</td></tr>
+      <tr><td>Replies sent</td><td>{{ counts.sent }}</td></tr>
+      <tr><td>Job posts seen</td><td>{{ counts.jobs }} ({{ counts.jobs_open }} open)</td></tr>
+    </tbody></table>
+  </section>
+  <section class="card">
+    <h2>Job posts</h2>
+    {% if jobs %}<table class="tbl small"><thead><tr><th>Title</th><th>Status</th><th>Hash</th><th>Seen</th></tr></thead><tbody>
+    {% for j in jobs %}<tr><td>{{ j.title or ('#' ~ j.id) }}</td><td>{{ j.status or ('open' if j.is_open else 'closed') }}</td><td class="mono">{{ j.hash_id }}</td><td>{{ j.seen_at|ago }}</td></tr>{% endfor %}
+    </tbody></table>{% else %}<p class="muted">None pulled yet.</p>{% endif %}
+  </section>
+  <section class="card">
+    <h2>Sync runs</h2>
+    <table class="tbl small"><thead><tr><th>Started</th><th>OK</th><th>Notes</th></tr></thead><tbody>
+    {% for r in runs %}<tr><td>{{ r.started_at|ago }}</td><td class="{% if not r.ok %}bad{% endif %}">{{ 'yes' if r.ok else 'no' }}</td><td class="muted small">{{ r.notes[:160] }}</td></tr>{% else %}<tr><td colspan="3" class="muted">Not run yet</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+</div>
+<div class="stack">
+  <section class="card">
+    <h2>Imported threads</h2>
+    {% if threads %}<table class="tbl small"><thead><tr><th>When</th><th>Applicant</th><th>Job</th><th>Stage</th><th>Source</th>{% if is_admin %}<th></th>{% endif %}</tr></thead><tbody>
+    {% for t in threads %}<tr>
+      <td>{{ t.imported_at|ago }}</td>
+      <td>{% if t.applicant_id %}<a href="/staff/applicant/{{ t.applicant_id }}">{{ t.applicant_name or t.name or ('#' ~ t.applicant_id) }}</a>{% else %}{{ t.name }}{% endif %}<div class="muted small">{{ t.email }}{% if t.mobile %} · {{ t.mobile }}{% endif %}{% if t.ap_score %} · AP {{ t.ap_score }}{% endif %}{% if t.rate %} · {{ t.rate }}{% endif %}</div></td>
+      <td>{{ t.job_title or t.job_hash or '-' }}</td>
+      <td>{{ STAGE_LABELS.get(t.stage, t.stage or '-') }}</td>
+      <td>{{ t.source }}</td>
+      {% if is_admin %}<td>{% if t.applicant_id %}<form method="post" action="/staff/olj/applicant/{{ t.applicant_id }}/invite"><button class="btn small">{{ 'Send invite' if send_enabled else 'Draft invite (held)' }}</button></form>{% endif %}</td>{% endif %}
+    </tr>{% endfor %}
+    </tbody></table>{% else %}<p class="muted">Nothing imported yet. Turn sync on or press Sync now once a session exists.</p>{% endif %}
+  </section>
+  <section class="card">
+    <h2>Replies on this channel</h2>
+    {% if held %}<table class="tbl small"><thead><tr><th>When</th><th>Applicant</th><th>Status</th><th>Text</th></tr></thead><tbody>
+    {% for m in held %}<tr><td>{{ m.created_at|ago }}</td><td><a href="/staff/applicant/{{ m.applicant_id }}">{{ m.name or ('#' ~ m.applicant_id) }}</a></td><td class="{% if m.status != 'sent' %}bad{% endif %}">{{ m.status }}{% if m.error %}: {{ m.error[:80] }}{% endif %}</td><td class="muted small">{{ m.body[:140] }}</td></tr>{% endfor %}
+    </tbody></table>{% else %}<p class="muted">None.</p>{% endif %}
+    <p class="hint">Held replies stay here until OLJ_SEND=1 is set and they are re-sent by hand; nothing is released automatically.</p>
+  </section>
+</div>
+</div>
+{% endblock %}

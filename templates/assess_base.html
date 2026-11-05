@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Assessment{% endblock %} · Beloura</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/static/app.css?v=1">
+<link rel="stylesheet" href="/static/assess.css?v=6">
+</head>
+<body class="assess">
+<div class="aurora" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+<header class="top">
+  <a class="brand" href="{{ link }}"><span class="mark"></span><b>Beloura</b> <em>Assessment</em></a>
+  <div class="right"><span class="muted small">{{ first or applicant.email or '' }}</span></div>
+</header>
+<main class="assess-main">
+{% if steps and steps|length > 1 %}
+<ol class="steps" aria-label="Sections">
+  {% for s in steps %}<li class="{{ s.state }}"><span class="n">{{ loop.index }}</span><span class="l">{{ s.label }}</span><span class="m">{{ s.minutes }} min</span></li>{% endfor %}
+</ol>
+{% endif %}
+{% block body %}{% endblock %}
+</main>
+<footer class="foot">{{ AGENT }}, Beloura's recruiting assistant · people on the team review every result</footer>
+{% block scripts %}{% endblock %}
+{% if gate_device %}<script>
+(function(){
+  try{
+    var fine = window.matchMedia && window.matchMedia('(any-pointer: fine)').matches;
+    var wide = Math.min(screen.width, screen.height) >= 700;
+    if (fine && wide) return;
+    var o = document.createElement('div');
+    o.setAttribute('style','position:fixed;inset:0;z-index:99999;background:#0e0f14;color:#f3f2fb;display:flex;align-items:center;justify-content:center;padding:28px;text-align:center;font-family:inherit');
+    o.innerHTML='<div style="max-width:460px"><h2 style="margin:0 0 12px;font-weight:800">Please use a laptop or desktop</h2><p style="color:#c9c6e0;line-height:1.55">The typing test and the live chats need a real keyboard, so the assessment only runs on a laptop or desktop computer, not a phone or tablet. Open this same link on a computer to start.</p></div>';
+    document.body.appendChild(o);
+    document.body.style.overflow='hidden';
+  } catch(e){}
+})();
+</script>{% endif %}
+</body>
+</html>

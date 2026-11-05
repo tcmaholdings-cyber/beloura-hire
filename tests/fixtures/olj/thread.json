@@ -1,0 +1,17 @@
+{
+ "data": [
+  {
+   "thread": {"id": 503, "hash_id": "th_g7h8i9", "job_id": 4433221, "job_hash_id": "job_x9y8", "is_archived": 0},
+   "partner": {"id": 5544332, "hash_id": "ps_55", "name": "Lea Dizon", "email": "lea.dizon@example.com"},
+   "message": {"message_id": 90010, "body": "Thanks Lea, I will send you the next step shortly.", "created": "2026-11-03 19:30:00", "sender_id": 1200},
+   "owner": {"id": 1200, "hash_id": "em_12", "name": "Employer", "email": "employer@example.com"}
+  },
+  {
+   "thread": {"id": 503, "hash_id": "th_g7h8i9", "job_id": 4433221, "job_hash_id": "job_x9y8", "is_archived": 0},
+   "partner": {"id": 5544332, "hash_id": "ps_55", "name": "Lea Dizon", "email": "lea.dizon@example.com"},
+   "message": {"message_id": 90009, "body": "Good day! I'm Lea, 3 years in chat support for a US telco. I can work the UK night shift.", "created": "2026-11-03 18:40:00", "sender_id": 5544332},
+   "owner": {"id": 1200, "hash_id": "em_12", "name": "Employer", "email": "employer@example.com"}
+  }
+ ],
+ "meta": {"current_page": 1, "last_page": 1, "per_page": 50, "total": 2}
+}

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apply · Beloura</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/static/app.css?v=1">
+<style>main.narrow{max-width:720px;margin:0 auto;padding:24px 16px}.err{color:var(--bad);font-size:12.5px;font-weight:600}.form label.chk{align-items:flex-start}</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+<main class="narrow">
+<section class="card">
+  <h1>Apply: OnlyFans chatter at Beloura</h1>
+  <p class="muted">Remote, shift-based, contractor. $2 per hour base plus 2% commission on your sales, paid weekly on Thursdays by PayPal or Wise. Shifts are in UK time; Philippine time is shown next to each. Takes about 5 minutes.</p>
+  {% if errors.form %}<p class="err">{{ errors.form }}</p>{% endif %}
+  <form method="post" action="/apply/{{ code }}" class="form">
+    <input type="text" name="website" value="" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+    <div class="f2">
+      <label>Your name <input name="name" value="{{ form.name or '' }}" required>{% if errors.name %}<span class="err">{{ errors.name }}</span>{% endif %}</label>
+      <label>Email <input name="email" type="email" value="{{ form.email or '' }}" required>{% if errors.email %}<span class="err">{{ errors.email }}</span>{% endif %}</label>
+      <label>Telegram username (fastest way to reach you) <input name="telegram" value="{{ form.telegram or '' }}" placeholder="@yourname"></label>
+      <label>Discord username <input name="discord" value="{{ form.discord or '' }}" placeholder="yourname"></label>
+      <label>Phone (optional) <input name="phone" value="{{ form.phone or '' }}" placeholder="+63..."></label>
+      <label>Your timezone <select name="timezone">{% for tz in tz_list %}<option value="{{ tz }}" {% if form.timezone == tz %}selected{% endif %}>{{ tz }}</option>{% endfor %}</select>{% if errors.timezone %}<span class="err">{{ errors.timezone }}</span>{% endif %}</label>
+    </div>
+    <h2>Availability</h2>
+    <p class="small muted">Tick every shift you could work. Times are UK time, with Philippine time alongside for today's date.</p>
+    {% for s in shifts %}
+    <label class="chk"><input type="checkbox" name="available_shifts" value="{{ s.key }}" {% if s.key in (form.available_shifts or []) %}checked{% endif %}> {{ s.uk }} <span class="muted">({{ s.ph }} Philippine time)</span></label>
+    {% endfor %}
+    {% if errors.available_shifts %}<span class="err">{{ errors.available_shifts }}</span>{% endif %}
+    <div class="f2">
+      <label>Hours per week you can work <input name="hours_per_week" type="number" min="1" max="80" value="{{ form.hours_per_week or '' }}" required>{% if errors.hours_per_week %}<span class="err">{{ errors.hours_per_week }}</span>{% endif %}</label>
+      <label>Your written English, 1 (basic) to 5 (fluent) <select name="english_self_rating">{% for n in [1,2,3,4,5] %}<option value="{{ n }}" {% if (form.english_self_rating or '')|string == n|string %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>{% if errors.english_self_rating %}<span class="err">{{ errors.english_self_rating }}</span>{% endif %}</label>
+    </div>
+    <h2>Setup</h2>
+    <div class="f2">
+      <label>Device you would work on <select name="device"><option value="">choose</option>{% for d in DEVICES %}<option value="{{ d }}" {% if form.device == d %}selected{% endif %}>{{ d }}</option>{% endfor %}</select>{% if errors.device %}<span class="err">{{ errors.device }}</span>{% endif %}</label>
+      <label>Internet connection <select name="connection_type"><option value="">choose</option>{% for c in CONNECTIONS %}<option value="{{ c }}" {% if form.connection_type == c %}selected{% endif %}>{{ c.replace('_', ' ') }}</option>{% endfor %}</select>{% if errors.connection_type %}<span class="err">{{ errors.connection_type }}</span>{% endif %}</label>
+    </div>
+    <h2>About you</h2>
+    <label>Experience <select name="experience">{% for k, label in EXPERIENCE %}<option value="{{ k }}" {% if form.experience == k %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label>Tell us about that experience (optional) <textarea name="experience_text" rows="3">{{ form.experience_text or '' }}</textarea></label>
+    <label>Why this role? <textarea name="why" rows="3" required>{{ form.why or '' }}</textarea>{% if errors.why %}<span class="err">{{ errors.why }}</span>{% endif %}</label>
+    <label>Where did you hear about us? <select name="heard_from">{% for h in HEARD_FROM %}<option value="{{ h }}" {% if form.heard_from == h %}selected{% endif %}>{{ h.replace('_', ' ') }}</option>{% endfor %}</select></label>
+    <h2>Confirmations</h2>
+    <label class="chk"><input type="checkbox" name="age_18" value="1" {% if form.age_18 %}checked{% endif %}> I am 18 or over.</label>{% if errors.age_18 %}<span class="err">{{ errors.age_18 }}</span>{% endif %}
+    <label class="chk"><input type="checkbox" name="willing_to_train" value="1" {% if form.willing_to_train %}checked{% endif %}> I am willing to complete the training (paid retroactively if I pass).</label>
+    <label class="chk"><input type="checkbox" name="consent" value="1" {% if form.consent %}checked{% endif %}> I agree to be contacted about this application by Telegram, Discord or email by Beloura's recruiting assistant and team, and to take the assessment. People review every decision.</label>{% if errors.consent %}<span class="err">{{ errors.consent }}</span>{% endif %}
+    <div class="row"><button class="btn">Send application</button></div>
+  </form>
+</section>
+</main>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+ "data": [
+  {
+   "thread": {"id": 501, "hash_id": "th_a1b2c3", "job_id": 4433221, "job_hash_id": "job_x9y8", "is_archived": 0, "has_upgraded": false},
+   "partner": {"id": 7788990, "hash_id": "ps_77", "name": "Maria Santos", "email": "Maria.Santos@example.com"},
+   "message": {"message_id": 90001, "body": "Good day! I am interested in the Sales Chat Specialist role. I have 2 years of chat support experience.", "created": "2026-11-03 21:14:05", "sender_id": 7788990},
+   "owner": {"id": 1200, "hash_id": "em_12", "name": "Employer", "email": "employer@example.com"},
+   "unread_status": true, "labels": [], "rating": null, "hired": false
+  },
+  {
+   "thread": {"id": 502, "hash_id": "th_d4e5f6", "job_id": 4433221, "job_hash_id": "job_x9y8", "is_archived": 0},
+   "partner": {"id": 6655443, "hash_id": "ps_66", "name": "Jose Reyes"},
+   "message": {"message_id": 90002, "body": "Hi, applying for the chat role.<br>Available night shift &amp; weekends.", "created": "2026-11-03 20:02:00", "sender_id": 6655443},
+   "owner": {"id": 1200, "hash_id": "em_12", "name": "Employer", "email": "employer@example.com"},
+   "unread_status": true, "labels": [], "rating": null, "hired": false
+  },
+  {
+   "thread": {"id": 503, "hash_id": "th_g7h8i9", "job_id": 4433221, "job_hash_id": "job_x9y8", "is_archived": 0},
+   "partner": {"id": 5544332, "hash_id": "ps_55", "name": "Lea Dizon", "email": "lea.dizon@example.com"},
+   "message": {"message_id": 90010, "body": "Thanks Lea, I will send you the next step shortly.", "created": "2026-11-03 19:30:00", "sender_id": 1200},
+   "owner": {"id": 1200, "hash_id": "em_12", "name": "Employer", "email": "employer@example.com"},
+   "unread_status": true, "labels": ["Abby"], "rating": 4, "hired": false
+  }
+ ],
+ "meta": {"current_page": 1, "last_page": 1, "per_page": 50, "total": 3}
+}

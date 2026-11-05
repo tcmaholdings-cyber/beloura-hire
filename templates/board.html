@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Pipeline · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="head">
+  <div>
+    <h1>Pipeline</h1>
+    <p class="muted">{{ n }} applicants{% if by_code %} · {% for c in by_code %}{{ c.channel_code or 'direct' }} {{ c.n }}{% if not loop.last %} · {% endif %}{% endfor %}{% endif %}</p>
+  </div>
+</div>
+<div class="board">
+  {% for s in PIPELINE %}
+  <section class="col">
+    <h2>{{ STAGE_LABELS[s] }} <span class="n">{{ cols[s]|length }}</span></h2>
+    <div class="cards">
+      {% for r in cols[s] %}{% include "_card.html" %}{% else %}<p class="empty">Nobody here</p>{% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+<div class="board side">
+  {% for s in SIDE %}
+  <section class="col">
+    <h2>{{ STAGE_LABELS[s] }} <span class="n">{{ cols[s]|length }}</span></h2>
+    <div class="cards">
+      {% for r in cols[s][:12] %}{% include "_card.html" %}{% else %}<p class="empty">Nobody here</p>{% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Assessment · {{ applicant.name or applicant.email or applicant.id }} · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="crumbs"><a href="/staff">Pipeline</a> › <a href="/staff/assess">Assessments</a> › <a href="/staff/applicant/{{ applicant.id }}">{{ applicant.name or applicant.email or ('#' ~ applicant.id) }}</a></div>
+<div class="head">
+  <div>
+    <h1>{{ applicant.name or applicant.email or ('#' ~ applicant.id) }}</h1>
+    <p class="muted"><span class="stage stage-{{ applicant.stage }}">{{ STAGE_LABELS.get(applicant.stage, applicant.stage) }}</span>
+      {% if a %} · assessment <b>{{ a.status }}</b>{% if a.outcome %} · outcome <b class="oc-{{ a.outcome }}">{{ a.outcome }}</b>{% endif %}
+      {% if a.started_at %} · started {{ a.started_at|ago }}{% endif %}{% if a.finished_at %} · finished {{ a.finished_at|ago }}{% endif %}{% if a.resumes %} · resumed {{ a.resumes }}x{% endif %}
+      {% if a.decided_by %} · decided by {{ a.decided_by }} {{ a.decided_at|ago }}{% endif %}{% else %} · no assessment yet{% endif %}</p>
+    {% if a and a.outcome_reason %}<p class="small">{{ a.outcome_reason }}</p>{% endif %}
+    {% if a and a.flags %}<p class="small">{% for f in a.flags %}<span class="flag">{{ f }}</span> {% endfor %}</p>{% endif %}
+  </div>
+  <div class="stack-right">
+    <form method="post" action="/staff/assess/{{ applicant.id }}/send" class="row"><button class="btn small ghost">{{ 'Resend link' if a and a.link_sent_at else 'Send the link via ' ~ AGENT }}</button></form>
+    {% if a and a.status == 'locked' %}<form method="post" action="/staff/assess/{{ applicant.id }}/reopen" class="row"><button class="btn small">Reopen (reset the pause)</button></form>{% endif %}
+    {% if a and a.status == 'done' and a.outcome == 'review' %}
+    <form method="post" action="/staff/assess/{{ applicant.id }}/decide" class="row" data-confirm="Set the outcome and let {{ AGENT }} message the applicant?">
+      <button class="btn small" name="outcome" value="passed">Pass</button>
+      <button class="btn small ghost" name="outcome" value="failed">Fail</button>
+    </form>
+    {% elif a and a.status == 'done' %}
+    <details class="small"><summary class="muted">Override the outcome</summary>
+    <form method="post" action="/staff/assess/{{ applicant.id }}/decide" class="row" data-confirm="Override the outcome and let {{ AGENT }} message the applicant again?">
+      <button class="btn small ghost" name="outcome" value="passed">Set passed</button>
+      <button class="btn small ghost" name="outcome" value="failed">Set failed</button>
+    </form></details>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid2">
+<div class="stack">
+  <section class="card">
+    <h2>What we learned from the chats</h2>
+    {% set lv = d.get('score') %}{% set cf = d.get('chat_fluency_avg') %}{% set ty = d.get('typing') or {} %}{% set cn = d.get('connection') or {} %}{% set ar = d.get('ai_risk') or {} %}
+    <table class="tbl small"><tbody>
+      <tr><td>Live chats (overall)</td><td>{% if lv is not none %}<b>{{ lv }}/10</b> over {{ d.get('judged') }} chats{% else %}<span class="muted">not graded</span>{% endif %}</td>
+          <td>{% if lv is not none %}{% if lv >= th.scenario_live %}<span class="pill ok">pass</span>{% elif lv >= th.live_review_floor %}<span class="pill rev">review</span>{% else %}<span class="pill no">below</span>{% endif %}{% endif %}</td>
+          <td class="muted">{{ th.scenario_live }} (review from {{ th.live_review_floor }})</td></tr>
+      <tr><td>Chat fluency</td><td>{% if cf is not none %}<b>{{ cf }}/5</b>{% else %}<span class="muted">-</span>{% endif %}</td>
+          <td>{% if cf is not none %}{% if cf >= th.chat_fluency %}<span class="pill ok">pass</span>{% else %}<span class="pill no">below</span>{% endif %}{% endif %}</td>
+          <td class="muted">{{ th.chat_fluency }}/5 · casual chat register, not formal</td></tr>
+      <tr><td>Typing</td><td>{% if ty.get('wpm') is not none %}<b>{{ ty.get('wpm') }} WPM</b>{% if ty.get('accuracy') is not none %} at {{ ty.get('accuracy') }}%{% endif %} <span class="muted">({{ ty.get('samples') }} of {{ ty.get('bursts') }} turns typed{% if ty.get('pasted') %}, {{ ty.get('pasted') }} pasted{% endif %})</span>{% else %}<span class="muted">no typed replies to measure</span>{% endif %}</td>
+          <td>{% if ty.get('wpm') is not none %}{% if ty.get('wpm') >= th.typing_wpm %}<span class="pill ok">pass</span>{% else %}<span class="pill no">below</span>{% endif %}{% endif %}</td>
+          <td class="muted">{{ th.typing_wpm|int }} WPM</td></tr>
+      <tr><td>Connection</td><td>{% if cn and not cn.get('unknown') %}<b>{{ cn.get('down_mbps') }} Mbps</b> down, {{ cn.get('up_mbps') }} up, {{ cn.get('latency_ms') }} ms, jitter {{ cn.get('jitter_ms') }} ms{% else %}<span class="muted">probe did not run (unknown)</span>{% endif %}</td>
+          <td>{% if cn and not cn.get('unknown') %}{% if cn.get('ok') %}<span class="pill ok">pass</span>{% else %}<span class="pill no">below</span>{% endif %}{% else %}<span class="pill">skipped</span>{% endif %}</td>
+          <td class="muted">{{ th.speed_down_mbps|int }} Mbps</td></tr>
+      <tr><td>AI-use risk</td><td>{% if ar %}<b>{{ ar.get('score') }}/100</b> <span class="muted">(worst message {{ ar.get('worst_chunk') }}, mean {{ ar.get('mean') }})</span>{% else %}<span class="muted">-</span>{% endif %}</td>
+          <td>{% if ar %}{% if ar.get('score') > th.ai_risk_review %}<span class="pill no">review</span>{% else %}<span class="pill ok">ok</span>{% endif %}{% endif %}</td>
+          <td class="muted">review over {{ th.ai_risk_review|int }}, a flag not a fail</td></tr>
+    </tbody></table>
+    {% set eq = d.get('eq') %}{% if eq %}<p class="small">Across the chats: {% for c in CRITERIA %}{% if eq.get(c) is not none %}{{ CRITERIA_LABELS[c] }} {{ eq.get(c) }}{% if not loop.last %} · {% endif %}{% endif %}{% endfor %}</p>{% endif %}
+    {% set cs = ar.get('chunk_stats') %}{% if cs %}<p class="small muted">Chunking: {{ cs.get('messages_per_turn') }} messages per turn, median {{ cs.get('median_chunk_chars') }} chars, {{ cs.get('typed') }} typed / {{ cs.get('pasted') }} pasted{% if cs.get('wall_of_text_turns') %}, {{ cs.get('wall_of_text_turns') }} wall-of-text turn(s){% endif %}.</p>{% endif %}
+    {% if ar.get('reasons') %}<p class="small"><b>AI-risk evidence</b></p><ul class="plain small">{% for r in ar.get('reasons') %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}
+    <p class="hint">Older staff typing numbers for comparison: {% for name, v in other_sources %}{{ name }} typing {{ v.typing }}{% if not loop.last %} · {% endif %}{% endfor %}.</p>
+    <p class="small muted">Link: <code>{{ link }}</code>{% if a and a.user_agent %} · {{ a.user_agent[:90] }}{% endif %}{% if d.get('median_reply_ms') is not none %} · median time to first reply {{ (d.get('median_reply_ms') / 1000)|round(1) }} s{% endif %}{% if d.get('timed_out') %} · {{ d.get('timed_out') }} timed out{% endif %}</p>
+  </section>
+
+  <section class="card">
+    <h2>{{ AGENT }}'s messages about the assessment</h2>
+    {% for m in msgs %}<div class="run"><div class="small muted">{{ m.created_at|ago }} · {{ m.channel or 'no channel' }} · {{ m.kind }} · {{ m.status }}</div><div class="small wa-text">{{ m.body }}</div></div>{% else %}<p class="muted">None yet.</p>{% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>Cost</h2>
+    <p class="small">{{ cost.n }} model calls · {{ cost.ti }} tokens in · {{ cost.tout }} out · ${{ '%.4f'|format(cost.usd) }}</p>
+    {% if calls %}<details><summary class="small">Calls</summary><table class="tbl small"><thead><tr><th>When</th><th>Model</th><th>Prompt</th><th>In</th><th>Out</th><th>$</th><th>ms</th><th>OK</th></tr></thead><tbody>
+    {% for c in calls %}<tr><td>{{ c.created_at|ago }}</td><td>{{ c.model }}</td><td>{{ c.prompt_version }}</td><td>{{ c.tokens_in }}</td><td>{{ c.tokens_out }}</td><td>{{ '%.5f'|format(c.cost_usd) }}</td><td>{{ c.latency_ms }}</td><td class="{{ '' if c.ok else 'bad' }}">{{ 'yes' if c.ok else c.error[:60] }}</td></tr>{% endfor %}
+    </tbody></table></details>{% endif %}
+  </section>
+</div>
+
+<div class="stack">
+  <section class="card">
+    <h2>Chat transcripts</h2>
+    {% for sc in scs %}
+    <div class="scenario">
+      <div class="sc-head"><b>{{ sc.idx + 1 }}. {{ sc.title }}</b> <span class="muted small">{{ sc.status }}</span>
+        {% if sc.judge.get('chat_fluency') is not none %}<span class="muted small">fluency {{ sc.judge.get('chat_fluency') }}/5</span>{% endif %}
+        {% if sc.score is not none %}<span class="score">{{ sc.score }}/10</span>{% elif sc.status == 'done' %}<span class="flag bad">not graded</span>{% endif %}</div>
+      <div class="wa-thread">
+        {% for t in sc.turns %}<div class="wa-msg {{ 'wa-in' if t.role == 'fan' else 'wa-out' }}"><div class="wa-text">{{ t.body or '(no reply)' }}</div><div class="wa-meta muted">{% if t.role == 'fan' %}fan{% if t.model %} · {{ t.model }}{% endif %}{% else %}you{% if t.latency_ms is not none %} · {{ (t.latency_ms / 1000)|round(1) }} s{% endif %}{% if t.timed_out %} · timed out{% endif %}{% endif %}</div></div>{% endfor %}
+      </div>
+      {% if sc.judge.get('scores') %}
+      <p class="small"><b>{{ sc.judge.get('summary') }}</b>{% if sc.judge.get('model') %} <span class="muted">({{ sc.judge.get('model') }})</span>{% endif %}</p>
+      <ul class="plain small">{% for c in CRITERIA %}{% set v = sc.judge.get('scores').get(c) %}{% if v %}<li><b>{{ CRITERIA_LABELS[c] }}</b> {{ v.score if v.score is not none else '-' }}: {{ v.evidence }}</li>{% endif %}{% endfor %}
+        {% if sc.judge.get('chat_fluency') is not none %}<li><b>Chat fluency</b> {{ sc.judge.get('chat_fluency') }}/5: {{ sc.judge.get('chat_fluency_evidence') }}</li>{% endif %}</ul>
+      {% elif sc.judge.get('error') %}<p class="small bad">Judge: {{ sc.judge.get('error') }}</p>{% endif %}
+    </div>
+    {% else %}<p class="muted">Not started.</p>{% endfor %}
+  </section>
+</div>
+</div>
+{% endblock %}

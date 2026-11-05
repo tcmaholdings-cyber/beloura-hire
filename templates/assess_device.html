@@ -1,0 +1,11 @@
+{% extends "assess_base.html" %}
+{% block title %}Use a laptop{% endblock %}
+{% block body %}
+<section class="card">
+  <h1>Please switch to a laptop or desktop</h1>
+  <p class="lead">The assessment has a typing test and live chats that need a real keyboard, so it only runs on a laptop or desktop computer. It will not work on a phone or tablet.</p>
+  <p>Open this same link on a laptop or desktop and you can start. The link does not expire, so there is no rush.</p>
+  <p class="small muted">If you are on a laptop and still see this, check your browser is not in a phone or tablet view, then reload.</p>
+  <form method="get" action="{{ link }}" class="row"><button class="btn">Check again</button></form>
+</section>
+{% endblock %}

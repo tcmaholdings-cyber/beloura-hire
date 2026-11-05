@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Job posts · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="head">
+  <div><h1>Job posts</h1><p class="muted">One spec, rendered per channel with that channel's rules. Paste, then press Posted so the queue knows when it is due again.</p></div>
+  <div class="right"><a class="btn" href="/staff/report">Weekly report</a></div>
+</div>
+{% if saved %}<div class="alert">Spec saved. Every channel below is re-rendered from it.</div>{% endif %}
+{% if query.attributed is defined %}<div class="alert">{{ query.attributed }} applicant(s) attributed by code word.</div>{% endif %}
+
+<section class="card">
+  <h2>Paste queue</h2>
+  <table class="tbl">
+    <thead><tr><th>Channel</th><th>Every</th><th>Last posted</th><th>Next due</th><th>Code word</th><th>Checks</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr class="{% if r.due %}due{% endif %}">
+      <td><a href="#{{ r.channel }}"><b>{{ r.label }}</b></a></td>
+      <td>{{ r.cadence_days }} d</td>
+      <td>{% if r.last_at %}{{ r.last_at|nice }} <span class="muted">({{ r.last_at|ago }}{% if r.last_log.posted_by %}, {{ r.last_log.posted_by }}{% endif %})</span>{% else %}<span class="muted">never</span>{% endif %}</td>
+      <td>{% if r.due %}<span class="pill bad">due{% if r.overdue_days %} · {{ r.overdue_days }} d over{% endif %}</span>{% else %}{{ r.next_at|nice }} <span class="muted">({{ r.next_at|ago }})</span>{% endif %}</td>
+      <td class="mono">{{ r.post.code_word }}</td>
+      <td>{% if r.post.violations %}<span class="pill bad">{{ r.post.violations|length }} issue(s)</span>{% else %}<span class="pill">ok</span>{% endif %}</td>
+      <td><form method="post" action="/staff/posts/{{ r.channel }}/posted" class="inline"><button class="btn small" type="submit">Posted</button></form></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">OLJ drops off the first page after about a week; Reddit tolerates one post a week per subreddit; Facebook rotates groups every few days; Telegram gets a weekly pin. Cadences are editable below.</p>
+</section>
+
+{% for r in rows %}
+<section class="card" id="{{ r.channel }}">
+  <div class="card-h">
+    <h2>{{ r.label }} {% if r.due %}<span class="pill bad">due</span>{% endif %}</h2>
+    <div class="right">
+      <button class="btn small" type="button" data-copy="title-{{ r.channel }}">Copy title</button>
+      <button class="btn small" type="button" data-copy="body-{{ r.channel }}">Copy body</button>
+      <a class="btn small" href="/staff/posts/{{ r.channel }}.txt" target="_blank">Plain text</a>
+    </div>
+  </div>
+  <p class="hint">{{ r.post.rules }} {{ r.cadence_hint }}</p>
+  {% if r.post.violations %}<div class="alert bad">Fix before posting: {{ r.post.violations|join('; ') }}</div>{% endif %}
+  <div class="grid2">
+    <div class="stack">
+      <label>Title <input id="title-{{ r.channel }}" value="{{ r.post.title }}" readonly></label>
+      <label>Body <textarea id="body-{{ r.channel }}" rows="{{ 6 + r.post.body.count('\n') }}" readonly>{{ r.post.body }}</textarea></label>
+    </div>
+    <div class="stack">
+      {% if r.post.fields %}<div class="kv">{% for k, v in r.post.fields.items() %}<div><b>{{ k }}</b> <span class="mono" id="field-{{ r.channel }}-{{ loop.index }}">{{ v }}</span> <button class="btn small" type="button" data-copy="field-{{ r.channel }}-{{ loop.index }}">Copy</button></div>{% endfor %}</div>{% endif %}
+      <div class="kv">
+        <div><b>Apply link</b> <span class="mono">{{ r.post.apply_url }}</span></div>
+        <div><b>Code word</b> <span class="mono">{{ r.post.code_word }}</span></div>
+      </div>
+      {% for n in r.post.notes %}<p class="hint">{{ n }}</p>{% endfor %}
+      <form method="post" action="/staff/posts/{{ r.channel }}/posted" class="form">
+        <label>Note (group name, subreddit, listing id) <input name="note" maxlength="200" placeholder="optional"></label>
+        <button class="btn" type="submit">Mark posted now</button>
+      </form>
+      {% if r.history %}<details><summary class="muted">History ({{ r.history|length }})</summary><ul class="plain">{% for h in r.history %}<li>{{ h.posted_at|nice }} · {{ h.posted_by }}{% if h.note %} · {{ h.note }}{% endif %}</li>{% endfor %}</ul></details>{% endif %}
+    </div>
+  </div>
+</section>
+{% endfor %}
+
+<section class="card" id="spec">
+  <h2>The spec</h2>
+  <p class="hint">Edit once, every channel re-renders. Links come from HIRE_PUBLIC_URL ({{ public }}); the Telegram deep link uses @{{ bot }}.{% if not is_admin %} Saving needs the admin role.{% endif %}</p>
+  <form method="post" action="/staff/posts" class="form">
+    <label>Title (OLJ cuts at 80 characters) <input name="post_title" maxlength="120" value="{{ sp.post_title }}"></label>
+    <label>About us <textarea name="post_about" rows="3">{{ sp.post_about }}</textarea></label>
+    <label>The role <textarea name="post_role" rows="3">{{ sp.post_role }}</textarea></label>
+    <div class="f2">
+      <label>Pay line <input name="post_pay" value="{{ sp.post_pay }}"></label>
+      <label>Shifts <input name="post_shifts" value="{{ sp.post_shifts }}"></label>
+      <label>Shifts per week <input name="post_shifts_per_week" value="{{ sp.post_shifts_per_week }}"></label>
+      <label>Requirements <input name="post_requirements" value="{{ sp.post_requirements }}"></label>
+      <label>Training <input name="post_training" value="{{ sp.post_training }}"></label>
+      <label>Tools <input name="post_tools" value="{{ sp.post_tools }}"></label>
+      <label>Contract line <input name="post_contractor" value="{{ sp.post_contractor }}"></label>
+    </div>
+    <h2>OLJ form fields</h2>
+    <div class="f2">
+      <label>Hours per week <input name="post_olj_hours_per_week" value="{{ sp.post_olj_hours_per_week }}"></label>
+      <label>Employment type <input name="post_olj_employment" value="{{ sp.post_olj_employment }}"></label>
+      <label>Skills <input name="post_olj_skills" value="{{ sp.post_olj_skills }}"></label>
+    </div>
+    <h2>Code words and cadence</h2>
+    <div class="f2">
+      {% for c in CHANNELS %}
+      <label>{{ CHANNEL_LABELS[c] }} code word <input name="post_code_{{ c }}" value="{{ sp['post_code_' ~ c] }}"></label>
+      <label>{{ CHANNEL_LABELS[c] }} refresh every (days) <input type="number" min="1" name="post_cadence_{{ c }}" value="{{ sp['post_cadence_' ~ c] }}"></label>
+      {% endfor %}
+    </div>
+    <button class="btn" type="submit" {% if not is_admin %}disabled{% endif %}>Save spec</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Attribution</h2>
+  <p class="hint">Applicants are tagged by the apply link they used. Those who came in through /apply/direct but repeated a code word are moved to that channel.</p>
+  <div class="kv">{% for a in attributed %}<div><b>{{ CHANNEL_LABELS.get(a.channel_code, a.channel_code) }}</b> {{ a.n }}</div>{% else %}<div class="muted">No applicants yet.</div>{% endfor %}</div>
+  <form method="post" action="/staff/posts/attribute" class="inline"><button class="btn small" type="submit">Attribute by code word now</button></form>
+</section>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){
+  var el=document.getElementById(b.getAttribute('data-copy'));if(!el)return;var txt=('value' in el && el.tagName!=='SPAN')?el.value:el.textContent;
+  function done(){var t=b.textContent;b.textContent='Copied';setTimeout(function(){b.textContent=t;},1200);}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,function(){fallback();});}else{fallback();}
+  function fallback(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){}document.body.removeChild(ta);}
+});});
+</script>
+<style>
+tr.due td{background:rgba(220,80,60,.08)}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+textarea[readonly],input[readonly]{font-family:inherit}
+</style>
+{% endblock %}

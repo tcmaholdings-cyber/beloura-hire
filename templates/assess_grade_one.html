@@ -1,0 +1,42 @@
+{% extends "assess_base.html" %}
+{% block title %}Grade: {{ title }}{% endblock %}
+{% block body %}
+<section class="card">
+  <div class="row" style="justify-content:space-between">
+    <h1 style="margin:0">{{ title }}</h1>
+    <a class="btn small ghost" href="/grade/{{ grader }}/{{ tok }}">Back to list</a>
+  </div>
+  <p class="muted small">{{ name }} · grading as {{ label }}</p>
+  {% if good %}<p class="small"><b>What good looks like:</b> {{ good }}</p>{% endif %}
+  <div class="wa-thread chat">
+    {% for t in turns %}
+      <div class="wa-msg {{ 'wa-in' if t.role == 'fan' else 'wa-out' }}"><div class="wa-text">{{ t.body }}</div></div>
+    {% endfor %}
+  </div>
+</section>
+<section class="card">
+  <h2>Your scores</h2>
+  <form method="post" action="/grade/{{ grader }}/{{ tok }}/{{ aid }}/{{ key }}">
+    <table class="tbl small"><tbody>
+    {% for c in criteria %}
+      <tr>
+        <td>{{ criteria_labels.get(c, c) }}</td>
+        <td><select name="{{ c }}">
+          <option value="">-</option>
+          {% for v in [1,2,3,4,5] %}<option value="{{ v }}" {% if existing and existing.scores.get(c) == v %}selected{% endif %}>{{ v }}</option>{% endfor %}
+        </select></td>
+      </tr>
+    {% endfor %}
+      <tr>
+        <td><b>Overall (1-5)</b></td>
+        <td><select name="overall" required>
+          <option value="">-</option>
+          {% for v in [1,2,3,4,5] %}<option value="{{ v }}" {% if existing and existing.overall == v %}selected{% endif %}>{{ v }}</option>{% endfor %}
+        </select></td>
+      </tr>
+    </tbody></table>
+    <p><textarea name="note" class="typed" rows="2" placeholder="Optional: one line on why">{{ existing.note if existing else '' }}</textarea></p>
+    <button class="btn">Save score</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,7 @@
+{
+ "7788990": {"data": {"id": 7788990, "name": "Maria Santos", "email": "maria.santos@example.com", "mobile": "09171234567", "viber": "+639171234567",
+                      "headline": "Customer Support | Chat Sales", "rate": "Php 30,000/month", "ap_score": 73, "education": "Bachelors degree"}},
+ "6655443": {"data": {"id": 6655443, "name": "Jose Reyes", "email": "jose.reyes@example.com", "mobile": "+63 917 555 0100", "headline": "Virtual Assistant", "ap_score": 41}},
+ "5544332": {"data": {"id": 5544332, "name": "Lea Dizon", "email": "lea.dizon@example.com", "mobile": "09995550101", "headline": "Chat Support, 3 yrs", "rate": "$4/hour", "ap_score": 88}},
+ "4433225": {"data": {"id": 4433225, "name": "Ana Cruz", "email": "ana.cruz@example.com", "headline": "Night shift CSR", "ap_score": 60}}
+}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Weekly report · {{ APP_NAME }}{% endblock %}
+{% block body %}
+<div class="head">
+  <div><h1>Weekly funnel</h1><p class="muted">{{ fmt(w.start) }} to {{ fmt(w.end) }} ({{ tz }}), against the seven days before. Posted to Discord #weekly-report every Monday 09:00 {{ tz }}.</p></div>
+  <div class="right">
+    <a class="btn" href="/staff/posts">Job posts</a>
+    <a class="btn" href="/staff/report.txt" target="_blank">Plain text</a>
+    <form method="post" action="/staff/report/send" class="inline" data-confirm="Post this week's report to Discord now?"><button class="btn" type="submit">Send to Discord now</button></form>
+  </div>
+</div>
+{% if sent == 'ok' %}<div class="alert">Posted to #weekly-report.</div>{% elif sent == 'dry' %}<div class="alert">Discord is not configured; the report was logged as a dry-run.</div>{% elif sent == 'skipped' %}<div class="alert bad">Not posted: no weekly-report channel id in settings (run tools/discord_setup.py).</div>{% endif %}
+
+<div class="kpis">
+  {% for m in ['applied', 'screened_in', 'passed', 'hired'] %}
+  <div class="kpi"><b>{{ w.totals[m] }}</b><span>{{ METRIC_LABELS[m] }}</span><em class="delta {% if w.deltas[m] > 0 %}up{% elif w.deltas[m] < 0 %}down{% endif %}">{{ '+' if w.deltas[m] > 0 else '' }}{{ w.deltas[m] }} vs last week</em></div>
+  {% endfor %}
+  <div class="kpi"><b>{% if w.tth.n %}{{ w.tth.median_days }} d{% else %}-{% endif %}</b><span>Median time to hire</span><em class="delta">{% if w.tth.n %}{{ w.tth.n }} hire(s){% if w.tth_prev.n %}, last week {{ w.tth_prev.median_days }} d{% endif %}{% else %}no hires this week{% endif %}</em></div>
+  <div class="kpi"><b>{% if w.no_show.rate is not none %}{{ w.no_show.rate }}%{% else %}-{% endif %}</b><span>No-show rate at finals</span><em class="delta">{% if w.no_show.rate is not none %}{{ w.no_show.no_show }} of {{ w.no_show.no_show + w.no_show.held }}{% else %}no finals held{% endif %}</em></div>
+  <div class="kpi"><b>{% if w.llm.per_applicant is not none %}${{ '%.3f'|format(w.llm.per_applicant) }}{% else %}-{% endif %}</b><span>LLM cost per applicant</span><em class="delta">${{ '%.2f'|format(w.llm.usd) }} over {{ w.llm.calls }} call(s){% if w.llm_prev.calls %}, last week ${{ '%.2f'|format(w.llm_prev.usd) }}{% endif %}</em></div>
+</div>
+
+<section class="card">
+  <h2>Per channel</h2>
+  <p class="hint">This week, with last week in brackets. Applied = form submitted; the stage columns count applicants who reached that stage in the window; finals booked and no-shows come from the interview table.</p>
+  <div class="r">
+  <table class="tbl">
+    <thead><tr><th>Channel</th>{% for m in METRICS %}<th>{{ METRIC_LABELS[m] }}</th>{% endfor %}<th>LLM $/applicant</th></tr></thead>
+    <tbody>
+    {% for c in w.channels %}
+    <tr>
+      <td><b>{{ c.label }}</b> <span class="muted mono">{{ c.code }}</span></td>
+      {% for m in METRICS %}<td>{{ c.cur[m] }} <span class="muted">({{ c.prev[m] }})</span></td>{% endfor %}
+      <td>{% set l = w.llm.by_channel.get(c.code) %}{% if l and l.per_applicant is not none %}${{ '%.3f'|format(l.per_applicant) }}{% else %}-{% endif %}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="{{ METRICS|length + 2 }}" class="muted">No applicants in either week.</td></tr>
+    {% endfor %}
+    </tbody>
+    <tfoot><tr><td><b>All channels</b></td>{% for m in METRICS %}<td><b>{{ w.totals[m] }}</b> <span class="muted">({{ w.prev_totals[m] }})</span></td>{% endfor %}<td>{% if w.llm.per_applicant is not none %}${{ '%.3f'|format(w.llm.per_applicant) }}{% else %}-{% endif %}</td></tr></tfoot>
+  </table>
+  </div>
+</section>
+
+<div class="grid2">
+  <section class="card">
+    <div class="card-h"><h2>Plain text</h2><button class="btn small" type="button" id="copy-text">Copy</button></div>
+    <pre class="plain mono" id="report-text">{{ text }}</pre>
+  </section>
+  <section class="card">
+    <h2>Delivery</h2>
+    <div class="kv">
+      <div><b>Channel id</b> <span class="mono">{% if cid %}{{ cid }}{% else %}not set{% endif %}</span></div>
+      <div><b>Schedule</b> Monday 09:00 {{ tz }}, once per ISO week</div>
+      <div><b>Last sent for</b> {{ sent_for or 'never' }}</div>
+      {% if last %}<div><b>Last attempt</b> {{ last.at|nice }} by {{ last.by }}{% if last.dry_run %} (dry-run){% endif %}{% if last.skipped %}: {{ last.skipped }}{% endif %}</div>{% endif %}
+    </div>
+  </section>
+</div>
+<script>
+document.getElementById('copy-text').addEventListener('click',function(){var b=this,txt=document.getElementById('report-text').textContent;
+function done(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1200);}
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done);}else{var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){}document.body.removeChild(ta);}});
+</script>
+<style>
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+pre.plain{white-space:pre-wrap;font-size:.85rem;line-height:1.4}
+.delta.up{color:var(--ok,#2a9d5c)}.delta.down{color:var(--bad,#c0392b)}
+</style>
+{% endblock %}

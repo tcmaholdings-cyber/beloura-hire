@@ -1,0 +1,20 @@
+{% extends "assess_base.html" %}
+{% block title %}Your assessment{% endblock %}
+{% block body %}
+<section class="card">
+  <h1>{% if a.status == 'started' %}Welcome back{{ ', ' ~ first if first }}{% else %}Your assessment{{ ', ' ~ first if first }}{% endif %}</h1>
+  <p class="lead">One chat test, about 15 minutes, in one sitting on a laptop or desktop. One longer conversation where you run the full flow with a fan, plus two short ones. You reply as the creator, just like a real shift{% if not hide_result %}, and see your result at the end{% endif %}.</p>
+  <ul class="rules">
+    <li><b>What you do</b>: chat to a simulated fan and run the flow: warm up, build it, send your script when it fits. Stay in character, keep it warm, keep it on the platform, and sell when it fits.</li>
+    <li><b>How to chat</b>: write the way you would on shift. You can send several short messages in a row, then pause (or press Over to them) and the fan replies. Take as long as you need: nothing is auto-sent, you send every message yourself.</li>
+    <li><b>Nothing to revise</b>: there is no quiz. We learn everything we need from how you chat, so just be natural.</li>
+  </ul>
+  <p class="small muted">Use a laptop or desktop, not a phone. Pasting is switched off. Leaving the test halfway counts as your one pause: you can come back once. Leaving a second time locks it and the team is told. The team reviews every result.</p>
+  {% if a.status == 'started' %}
+  <p class="notice">You are partway through.{% if a.resumes %} You have used your pause.{% endif %}</p>
+  {% endif %}
+  <form method="post" action="{{ link }}/start" class="row">
+    <button class="btn">{{ 'Continue' if a.status == 'started' else 'Start the assessment' }}</button>
+  </form>
+</section>
+{% endblock %}

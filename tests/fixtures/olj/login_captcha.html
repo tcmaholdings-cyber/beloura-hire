@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Login | OnlineJobs.ph</title><script src="https://www.google.com/recaptcha/api.js" async defer></script></head>
+<body>
+<div class="container">
+  <form action="/authenticate" method="post" class="oj-form text-left">
+    <input type="hidden" name="csrf-token" value="3640096e587a905de16b9b4b6c1fe70f">
+    <input id="login_username" name="info[email]" type="email" class="form-control" required>
+    <input type="password"  name="info[password]" id="login_password" value="" class="form-control" required>
+    <div class="g-recaptcha" data-sitekey="6Lfn580sAAAAACNPzNOgszWXue8_3_EEP8Kagiec"></div>
+    <button type="submit" class="btn btn-primary">Login</button>
+  </form>
+</div>
+</body>
+</html>
